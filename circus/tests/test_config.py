@@ -23,6 +23,8 @@ _CONF = {
     'issue310': os.path.join(CONFIG_DIR, 'issue310.ini'),
     'issue395': os.path.join(CONFIG_DIR, 'issue395.ini'),
     'hooks': os.path.join(CONFIG_DIR, 'hooks.ini'),
+    'find_hook_in_pythonpath': os.path.join(CONFIG_DIR,
+                                            'find_hook_in_pythonpath.ini'),
     'env_var': os.path.join(CONFIG_DIR, 'env_var.ini'),
     'env_section': os.path.join(CONFIG_DIR, 'env_section.ini'),
     'multiple_wildcard': os.path.join(CONFIG_DIR, 'multiple_wildcard.ini'),
@@ -42,7 +44,8 @@ _CONF = {
     'issue651': os.path.join(CONFIG_DIR, 'issue651.ini'),
     'issue665': os.path.join(CONFIG_DIR, 'issue665.ini'),
     'issue680': os.path.join(CONFIG_DIR, 'issue680.ini'),
-    'virtualenv': os.path.join(CONFIG_DIR, 'virtualenv.ini')
+    'virtualenv': os.path.join(CONFIG_DIR, 'virtualenv.ini'),
+    'empty_section': os.path.join(CONFIG_DIR, 'empty_section.ini'),
 }
 
 
@@ -214,6 +217,13 @@ class TestConfig(TestCase):
         self.assertEqual(watcher.hooks['before_start'].__doc__, hook.__doc__)
         self.assertTrue('before_start' not in watcher.ignore_hook_failure)
 
+    def test_find_hook_in_pythonpath(self):
+        arbiter = Arbiter.load_from_config(_CONF['find_hook_in_pythonpath'])
+        watcher = arbiter.iter_watchers()[0]
+        self.assertEqual(watcher.hooks['before_start'].__doc__,
+                         'relative_hook')
+        self.assertTrue('before_start' not in watcher.ignore_hook_failure)
+
     def test_watcher_env_var(self):
         conf = get_config(_CONF['env_var'])
         watcher = Watcher.load_from_config(conf['watchers'][0])
@@ -371,6 +381,11 @@ class TestConfig(TestCase):
         watcher = conf['watchers'][0]
         self.assertEqual(watcher['virtualenv'], "/tmp/.virtualenvs/test")
         self.assertEqual(watcher['virtualenv_py_ver'], "3.3")
+
+    def test_empty_section(self):
+        conf = get_config(_CONF['empty_section'])
+        self.assertEqual([], conf.get('sockets'))
+        self.assertEqual([], conf.get('plugins'))
 
 
 test_suite = EasyTestSuite(__name__)

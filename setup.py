@@ -6,7 +6,7 @@ if not hasattr(sys, 'version_info') or sys.version_info < (2, 6, 0, 'final'):
     raise SystemExit("Circus requires Python 2.6 or higher.")
 
 
-install_requires = ['iowait', 'psutil', 'pyzmq>=13.1.0', 'tornado>=3.0']
+install_requires = ['psutil', 'pyzmq>=13.1.0', 'tornado>=3.0']
 
 try:
     import argparse     # NOQA
@@ -19,7 +19,7 @@ with open("README.rst") as f:
 
 setup(name='circus',
       version=__version__,
-      packages=find_packages(exclude=["docs"]),
+      packages=find_packages(exclude=["docs", "examples"]),
       description=("Circus is a program that will let you run and watch "
                    " multiple processes and sockets."),
       long_description=README,

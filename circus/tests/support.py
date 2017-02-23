@@ -30,10 +30,11 @@ import mock
 import tornado
 
 from circus import get_arbiter
+from circus.client import AsyncCircusClient, make_message
 from circus.util import DEFAULT_ENDPOINT_DEALER, DEFAULT_ENDPOINT_SUB
 from circus.util import tornado_sleep, ConflictError
 from circus.util import IS_WINDOWS
-from circus.client import AsyncCircusClient, make_message
+from circus.watcher import Watcher
 
 ioloop.install()
 if 'ASYNC_TEST_TIMEOUT' not in os.environ:
@@ -132,6 +133,15 @@ def get_available_port():
         s.close()
 
 
+class MockWatcher(Watcher):
+
+    def start(self):
+        self.started = True
+
+    def spawn_process(self):
+        self.processes[1] = 'dummy'
+
+
 class TestCircus(AsyncTestCase):
 
     arbiter_factory = get_arbiter
@@ -169,10 +179,15 @@ class TestCircus(AsyncTestCase):
 
     def tearDown(self):
         for file in self.files + self.tmpfiles:
-            if os.path.exists(file):
+            try:
                 os.remove(file)
+            except OSError:
+                pass
         for dir in self.dirs:
-            shutil.rmtree(dir)
+            try:
+                shutil.rmtree(dir)
+            except OSError:
+                pass
 
         self._stop_clients()
 
@@ -286,14 +301,6 @@ class TestCircus(AsyncTestCase):
         arbiter = cls.arbiter_factory([worker], plugins=plugins, **arbiter_kw)
         cls.arbiters.append(arbiter)
         return testfile, arbiter
-
-    def _run_circus(self, callable_path, plugins=None, stats=False, **kw):
-
-        testfile, arbiter = TestCircus._create_circus(callable_path,
-                                                      plugins, stats, **kw)
-        self.arbiters.append(arbiter)
-        self.files.append(testfile)
-        return testfile
 
     @tornado.gen.coroutine
     def _stop_runners(self):

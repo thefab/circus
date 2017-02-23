@@ -169,7 +169,7 @@ class Watcher(object):
     - **hooks**: callback functions for hooking into the watcher startup
       and shutdown process. **hooks** is a dict where each key is the hook
       name and each value is a 2-tuple with the name of the callable
-      or the callabled itself and a boolean flag indicating if an
+      or the callable itself and a boolean flag indicating if an
       exception occuring in the hook should not be ignored.
       Possible values for the hook name: *before_start*, *after_start*,
       *before_spawn*, *after_spawn*, *before_stop*, *after_stop*.,
@@ -185,6 +185,10 @@ class Watcher(object):
 
     - **virtualenv** -- The root directory of a virtualenv. If provided, the
       watcher will load the environment for its execution. (default: None)
+
+    - **stdin_socket**: If not None, the socket with matching name is placed
+      at file descriptor 0 (stdin) of the processes.
+      default: None.
 
     - **close_child_stdin**: If True, closes the stdin after the fork.
       default: True.
@@ -209,7 +213,8 @@ class Watcher(object):
                  copy_env=False, copy_path=False, max_age=0,
                  max_age_variance=30, hooks=None, respawn=True,
                  autostart=True, on_demand=False, virtualenv=None,
-                 close_child_stdin=True, close_child_stdout=False,
+                 stdin_socket=None, close_child_stdin=True,
+                 close_child_stdout=False,
                  close_child_stderr=False, virtualenv_py_ver=None,
                  use_papa=False, **options):
         self.name = name
@@ -230,7 +235,7 @@ class Watcher(object):
         self.stdout_stream = get_stream(self.stdout_stream_conf)
         self.stderr_stream = get_stream(self.stderr_stream_conf)
         self.stream_redirector = None
-        self.max_retry = max_retry
+        self.max_retry = int(max_retry)
         self._options = options
         self.singleton = singleton
         self.copy_env = copy_env
@@ -245,6 +250,7 @@ class Watcher(object):
 
         self.respawn = respawn
         self.autostart = autostart
+        self.stdin_socket = stdin_socket
         self.close_child_stdin = close_child_stdin
         self.close_child_stdout = close_child_stdout
         self.close_child_stderr = close_child_stderr
@@ -426,6 +432,10 @@ class Watcher(object):
 
     def __len__(self):
         return len(self.processes)
+
+    def __repr__(self):
+        return "<circus.Watcher name=%s numprocesses=%s>" % (self.name,
+                                                             self.numprocesses)
 
     def notify_event(self, topic, msg):
         """Publish a message on the event publisher channel"""
@@ -647,6 +657,13 @@ class Watcher(object):
                     for name, sock in self.sockets.items()
                     if sock.use_papa == self.use_papa)
 
+    def _get_stdin_socket_fd(self):
+        if self.stdin_socket is not None:
+            if self.stdin_socket not in self.sockets:
+                raise Exception("stdin_socket '%s' does not exist" %
+                                self.stdin_socket)
+            return self.sockets[self.stdin_socket].fileno()
+
     def spawn_process(self, recovery_wid=None):
         """Spawn process.
 
@@ -713,7 +730,7 @@ class Watcher(object):
         return False
 
     @util.debuglog
-    def send_signal_process(self, process, signum):
+    def send_signal_process(self, process, signum, recursive=False):
         """Send the signum signal to the process
 
         The signal is sent to the process itself then to all the children
@@ -721,7 +738,7 @@ class Watcher(object):
         children = None
         try:
             # getting the process children
-            children = process.children()
+            children = process.children(recursive=recursive)
 
             # sending the signal to the process itself
             self._send_signal(process, signum)
@@ -778,7 +795,8 @@ class Watcher(object):
             # later anyway
             if hasattr(signal, 'SIGKILL'):
                 # We are not smart anymore
-                self.send_signal_process(process, signal.SIGKILL)
+                self.send_signal_process(process, signal.SIGKILL,
+                                         recursive=True)
         if self.stream_redirector:
             self.stream_redirector.remove_redirections(process)
         process.stopping = False
