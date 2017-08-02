@@ -136,7 +136,6 @@ class Controller(object):
         if not msg:
             self.send_response(None, cid, msg, "error: empty command")
         else:
-            logger.debug("got message %s", msg)
             self.dispatch((cid, msg))
 
     def handle_autodiscover_message(self, fd_no, type):
