@@ -95,7 +95,7 @@ def rlimit_value(val):
 
 
 def read_config(config_path):
-    cfg = DefaultConfigParser()
+    cfg = DefaultConfigParser(interpolation=None)
     with open(config_path) as f:
         if hasattr(cfg, 'read_file'):
             cfg.read_file(f)
