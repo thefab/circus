@@ -673,6 +673,15 @@ class ObjectDict(dict):
         return self[item]
 
 
+class CrashWhenError(logging.Handler):
+
+    def emit(self, record):
+        if record.level >= logging.ERROR:
+            sys.stderr.write("log with level >= logging.ERROR detected\n")
+            sys.stderr.write("    => we will stop here")
+            os._exit(2)
+
+
 def configure_logger(logger, level='INFO', output="-", loggerconfig=None,
                      name=None):
     if loggerconfig is None or loggerconfig.lower().strip() == "default":
@@ -706,7 +715,7 @@ def configure_logger(logger, level='INFO', output="-", loggerconfig=None,
                 handler = logging.FileHandler(output)
         formatter = logging.Formatter(fmt=LOG_FMT, datefmt=datefmt)
         handler.setFormatter(formatter)
-        root_logger.handlers = [handler]
+        root_logger.handlers = [handler, CrashWhenError()]
     else:
         loggerconfig = os.path.abspath(loggerconfig)
         if loggerconfig.lower().endswith(".ini"):
