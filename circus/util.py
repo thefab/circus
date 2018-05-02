@@ -676,9 +676,13 @@ class ObjectDict(dict):
 class CrashWhenError(logging.Handler):
 
     def emit(self, record):
-        if record.level >= logging.ERROR:
-            sys.stderr.write("log with level >= logging.ERROR detected\n")
-            sys.stderr.write("    => we will stop here")
+        if record.levelno >= logging.ERROR:
+            try:
+                sys.stderr.write("log with level >= logging.ERROR detected\n")
+                sys.stderr.write("    => we will stop here")
+                sys.stderr.flush()
+            except Exception:
+                pass
             os._exit(2)
 
 
