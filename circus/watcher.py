@@ -323,7 +323,7 @@ class Watcher(object):
 
         self.rlimits = rlimits
         self.send_hup = send_hup
-        self.stop_signal = stop_signal
+        self.stop_signal = util.to_signum(stop_signal)
         self.stop_children = stop_children
         self.async_kill = async_kill
         self.sockets = self.evpub_socket = None
