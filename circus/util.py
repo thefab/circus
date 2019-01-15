@@ -321,8 +321,11 @@ def to_signum(signum):
         'SIGKILL' - signal names with SIG prefix
         'SIGRTMIN+1' - signal names with offsets
     """
-    if isinstance(signum, int):
-        return signum
+    try:
+        val = int(signum)
+        return val
+    except ValueError:
+        pass
 
     m = re.match(r'(\w+)(\+(\d+))?', signum)
     if m:
@@ -1099,8 +1102,8 @@ def check_future_exception_and_log(future):
     if isinstance(future, concurrent.Future):
         exception = future.exception()
         if exception is not None:
-            logger.error("exception %s caught" % exception)
             if hasattr(future, "exc_info"):
                 exc_info = future.exc_info()
                 traceback.print_tb(exc_info[2])
+            logger.error("exception %s caught" % exception)
             return exception
