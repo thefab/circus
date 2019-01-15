@@ -774,7 +774,7 @@ class Watcher(object):
         try:
             logger.debug("%s: kill process %s", self.name, process.pid)
             if self.stop_children:
-                self.send_signal_process(process, stop_signal)
+                self.send_signal_process(process, stop_signal, recursive=True)
             else:
                 self._send_signal(process, stop_signal)
                 self.notify_event("kill", {"process_pid": process.pid,
