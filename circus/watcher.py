@@ -70,7 +70,7 @@ class Watcher(object):
     - **stop_children**: send the **stop_signal** to the children too.
       Defaults to False.
 
-    - **async_kill**: don't wait for kill total completion (SIGTERM + 
+    - **async_kill**: don't wait for kill total completion (SIGTERM +
       graceful timeout + SIGKILL), can help if you have a big graceful
       timeout and if you don't worry about to have more processes than
       numprocesses during the graceful killing phase.
@@ -579,8 +579,8 @@ class Watcher(object):
                     processes_to_kill.append(process)
             if self.async_kill:
                 for process in processes_to_kill:
-                    self.processes.pop(process.pid)
                     future = self.kill_process(process)
+                    self.processes.pop(process.pid)
                     self.async_killing_futures[process.pid] = future
                     self.loop.add_future(future,
                                          partial(self._async_kill_cb,
@@ -600,8 +600,8 @@ class Watcher(object):
                                            self.max_age_variance))]
         if self.async_kill:
             for process in expired_processes:
-                self.processes.pop(process.pid)
                 future = self.kill_process(process)
+                self.processes.pop(process.pid)
                 self.async_killing_futures[process.pid] = future
                 self.loop.add_future(future,
                                      partial(self._async_kill_cb,
