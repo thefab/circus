@@ -719,6 +719,9 @@ class Watcher(object):
             # lead to bad infinite retries here
             except (OSError, ValueError) as e:
                 logger.warning('error in %r: %s', self.name, str(e))
+                if self.max_retry == -1:
+                    # to avoid an infinite retry
+                    return True
 
             if process is None:
                 nb_tries += 1
