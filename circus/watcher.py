@@ -708,8 +708,12 @@ class Watcher(object):
                     self.stream_redirector.add_redirections(process)
 
                 self.processes[process.pid] = process
-                logger.debug('running %s process [pid %d]', self.name,
-                             process.pid)
+                if isinstance(process.spawned_args, str):
+                    args = process.spawned_args
+                else:
+                    args = " ".join(process.spawned_args)
+                logger.info("process: %s launched under pid: %d" %
+                            (args, process.pid))
                 if not self.call_hook('after_spawn', pid=process.pid):
                     self.kill_process(process)
                     del self.processes[process.pid]

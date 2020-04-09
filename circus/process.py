@@ -180,6 +180,7 @@ class Process(object):
         self.wid = wid
         self.cmd = cmd
         self.args = args
+        self.spawned_args = None
         self.working_dir = working_dir or get_working_dir()
         self.shell = shell
         if uid:
@@ -268,7 +269,7 @@ class Process(object):
         self.started = time.time()
         sockets_fds = self._get_sockets_fds()
 
-        args = self.format_args(sockets_fds=sockets_fds)
+        self.spawned_args = self.format_args(sockets_fds=sockets_fds)
 
         def preexec():
             streams = []
@@ -358,7 +359,7 @@ class Process(object):
         if self.pipe_stderr:
             extra['stderr'] = PIPE
 
-        self._worker = Popen(args, cwd=self.working_dir,
+        self._worker = Popen(self.spawned_args, cwd=self.working_dir,
                              shell=self.shell, preexec_fn=preexec_fn,
                              env=self.env, close_fds=not self.use_fds,
                              executable=self.executable, **extra)
@@ -446,7 +447,7 @@ class Process(object):
     @debuglog
     def send_signal(self, sig):
         """Sends a signal **sig** to the process."""
-        logger.debug("sending signal %s to %s" % (sig, self.pid))
+        logger.info("sending signal %s to %s" % (sig, self.pid))
         return self._worker.send_signal(sig)
 
     @debuglog
